@@ -1,34 +1,28 @@
-import sys
+import sys, math
 
-# Embedding table lookup.
-# Read VOCAB <V> DIM <D>, then V rows of floats, then TOKENS ids.
-# Emit one row of comma-separated floats per token id (4 decimals).
-# Out-of-range ids -> D zeros.
+# LayerNorm: y = (x - mean) / sqrt(var + eps).  Pre-norm style, gamma=1 beta=0.
+# Parse EPS (default 1e-5) and any number of NORM lines; emit normalised rows.
 
-# TODO: parse the input and print the looked-up rows.
-IN = input("")
+EPS = 1e-5
+for raw in sys.stdin:
+    line = raw.rstrip("\n").strip()
+    if not line:
+        continue
+    if line.startswith("EPS "):
+        EPS = float(line[4:])
+    elif line.startswith("NORM "):
+        x = [float(v) for v in line[5:].split(",")]
+        # TODO: compute mean, var, normalised y; print 4-decimal floats
+        mean  = (sum(x))/(len(x))
+        var = 0
+        for num in x:
+            var = var + (num-mean)**2
+        var = var / len(x)
+        for i in range(len(x)):
+            y_i = round((x[i]-mean) / ((var+EPS)**0.5),4)
+            if(i==(len(x)-1)):
+                print("{:.4f}".format(y_i))
+            else:
+                print("{:.4f}".format(y_i),end = ',')
 
-TEMP = IN.split()
-VOCAB  = int(TEMP[1])
-DIM = int(TEMP[-1])
 
-lookup = {}
-
-for i in range(VOCAB):
-  embedds = input()
-  embedds = embedds.split(',')
-  for j in range(len(embedds)):
-    embedds[j] =float(embedds[j])
-  lookup[i] = embedds
-TOKENS = input("")
-TOKENS = TOKENS.split()
-TOKENS = TOKENS[-1]
-TOKENS = TOKENS.split(',')
-for token in TOKENS:
-  token = int(token)
-  embedd = lookup.get(token,[float(0) for i in range(DIM)])
-  for i in range(DIM):
-    if(i == DIM-1):
-      print("{:.4f}".format(embedd[i]))
-    else:
-      print("{:.4f}".format(embedd[i]),end=',')
