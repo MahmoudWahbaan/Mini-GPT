@@ -1,25 +1,44 @@
 import sys, math
 
-# Sinusoidal positional encoding.
-# For each "PE <pos> <d_model>" line emit d_model floats:
-#   even dim -> sin(pos / 10000^(2k/d_model))
-#   odd dim  -> cos(pos / 10000^(2k/d_model))
-# Round to 4 decimals.
+# Scaled dot-product attention scores: Q @ K^T / sqrt(D).
+# Parse 'T <T> D <D>', then T rows of Q, then T rows of K.
+# Emit the T x T score matrix, 4 decimals.
 
-for raw in sys.stdin:
-    line = raw.rstrip("\n").strip()
-    if not line or not line.startswith("PE "):
-        continue
-    line = line.split()
-    pos = int(line[1])
-    d_model = int(line[-1])
-    # TODO: parse pos, d_model and emit the comma-separated encoding.
-    PE = []
-    for k in range(d_model//2):
-        PE.append( round(math.sin(pos/10000 ** ((2*k)/(d_model))),4))
-        PE.append(round(math.cos(pos/10000 ** ((2*k)/(d_model))),4))
-    for i in range(len(PE)):
-        if((i==(len(PE)-1))):
-            print("{:.4f}".format(PE[i]))
-        else:
-            print("{:.4f}".format(PE[i]),end=',') 
+# TODO: implement the dot product and the /sqrt(D) scaling.
+
+line = input().split()
+T = int(line[1])
+D = int(line[-1])
+Query = []
+Key = []
+for i in range(T):
+  line = input().split(',')
+  vec = []
+  for i in range(len(line)):
+    vec.append(int(line[i]))
+  Query.append(vec)
+for i in range(T):
+  line = input().split(',')
+  vec = []
+  for i in range(len(line)):
+    vec.append(int(line[i]))
+  Key.append(vec)
+Attention  = []
+s_d = math.sqrt(D)
+for i in range(T):
+  mat1 = Query[i]
+  res = []
+  for j in range(T):
+    mat2 = Key[j]  
+    calc = 0
+    for dim in range(D):
+      calc = calc+((mat1[dim]*mat2[dim])/(s_d))
+    res.append(round(calc,4))
+  Attention.append(res)
+
+for row in Attention:
+  for i in range(len(row)):
+    if(i==(len(row)-1)):
+      print("{:.4f}".format(row[i]))
+    else:
+      print("{:.4f}".format(row[i]),end = ',')
