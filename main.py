@@ -1,22 +1,34 @@
 import sys
 
-# Character-level tokenizer.
-# Parse the ALPHABET line, build a char -> index map,
-# then map every char of the TEXT line. Missing chars -> -1.
-alphabet = ""
-text = ""
-for raw in sys.stdin:
-    line = raw.rstrip("\n")
-    if line.startswith("ALPHABET "):
-        alphabet = line[len("ALPHABET "):]
-    elif line.startswith("TEXT "):
-        text = line[len("TEXT "):]
+# Embedding table lookup.
+# Read VOCAB <V> DIM <D>, then V rows of floats, then TOKENS ids.
+# Emit one row of comma-separated floats per token id (4 decimals).
+# Out-of-range ids -> D zeros.
 
-# TODO: build the alphabet->index map and emit comma-separated ids.
+# TODO: parse the input and print the looked-up rows.
+IN = input("")
 
-char_to_idx = {}
-for c, i in enumerate(alphabet):
-    char_to_idx[i] = c
+TEMP = IN.split()
+VOCAB  = int(TEMP[1])
+DIM = int(TEMP[-1])
 
-for i in range(len(text)):
-    print(char_to_idx.get(text[i], -1), end="," if i < len(text) - 1 else "")
+lookup = {}
+
+for i in range(VOCAB):
+  embedds = input()
+  embedds = embedds.split(',')
+  for j in range(len(embedds)):
+    embedds[j] =float(embedds[j])
+  lookup[i] = embedds
+TOKENS = input("")
+TOKENS = TOKENS.split()
+TOKENS = TOKENS[-1]
+TOKENS = TOKENS.split(',')
+for token in TOKENS:
+  token = int(token)
+  embedd = lookup.get(token,[float(0) for i in range(DIM)])
+  for i in range(DIM):
+    if(i == DIM-1):
+      print("{:.4f}".format(embedd[i]))
+    else:
+      print("{:.4f}".format(embedd[i]),end=',')
