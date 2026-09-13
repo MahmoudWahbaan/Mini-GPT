@@ -1,32 +1,37 @@
 import sys, math
 
-# Causal mask + softmax.
-# Read 'T <T>' and T rows of T floats each.  For row i, set entries j>i to -inf,
-# then softmax (numerically stable).  Print T rows of T floats (4 decimals).
+# Two pre-norm residual sublayers with identity sublayer:
+#   y1 = x + alpha * LayerNorm(x)
+#   y2 = y1 + alpha * LayerNorm(y1)
+# Use eps=1e-5, gamma=1, beta=0.
 
-# TODO: implement.
+EPS = 1e-5
+ALPHA = 0
 
-line = input().split()
-t = int(line[-1])
-mat = []
-for i in range(t):
-  row = []
-  nums = input().split(',')
-  for j in range(t):
-    row.append(float(nums[j]))
-  mat.append(row)
-for i in range(t):
-  for j in range(i+1,t):
-    mat[i][j] = -1*math.inf
-for row in range(t):
-  sum_e = 0
-  for col in range(t):
-    sum_e = sum_e + math.exp(mat[row][col])
-  for col in range(t):
-    mat[row][col] = (math.exp(mat[row][col]))/(sum_e)
-for r in range(t):
-  for c in range(t):
-    if(c == t-1):
-      print("{:.4f}".format(mat[r][c]))
+def layer_norm(v):
+    # TODO: implement (mean, var, normalise)
+    tmp_v = []
+    mean =  (sum(v))/(len(v))
+    var = (sum(((vi-mean)**2) for vi in v))/(len(v))
+    for vi in v:
+        tmp_v.append(ALPHA * ((vi-mean)/math.sqrt(var+EPS)))
+    for i in range(len(v)):
+        v[i] = v[i] + tmp_v[i]
+    return v
+
+# parse X and ALPHA, then compute y1, y2, print y2 with 4 decimals.
+line = input().rstrip().split()
+line = line[-1].split(',')
+X = []
+for i in range(len(line)):
+    X.append(float(line[i]))
+ALPHA = float(input().split()[-1])
+
+y1 = layer_norm(X)
+y2 = layer_norm(y1)
+
+for i in range(len(y2)):
+    if(i== (len(y2)-1)):
+        print("{:.4f}".format(y2[i]))
     else:
-      print("{:.4f}".format(mat[r][c]),end = ',')
+        print("{:.4f}".format(y2[i]),end=',')
