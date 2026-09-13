@@ -1,65 +1,32 @@
-import sys
+import sys, math
 
-# Position-wise FFN: y = W2 @ relu(W1 @ x + b1) + b2
-# Parse D, H, then X, W1, B1, W2, B2.
+# Causal mask + softmax.
+# Read 'T <T>' and T rows of T floats each.  For row i, set entries j>i to -inf,
+# then softmax (numerically stable).  Print T rows of T floats (4 decimals).
 
-D = H = 0
-X = []; W1 = []; B1 = []; W2 = []; B2 = []
-for raw in sys.stdin:
-    line = raw.rstrip("\n").strip()
-    if not line: continue
-    if(line[0] == 'D'):
-        parts = line.split()
-    elif(line[0] == 'X'):
-        parts = line[2:].split(',')
+# TODO: implement.
+
+line = input().split()
+t = int(line[-1])
+mat = []
+for i in range(t):
+  row = []
+  nums = input().split(',')
+  for j in range(t):
+    row.append(float(nums[j]))
+  mat.append(row)
+for i in range(t):
+  for j in range(i+1,t):
+    mat[i][j] = -1*math.inf
+for row in range(t):
+  sum_e = 0
+  for col in range(t):
+    sum_e = sum_e + math.exp(mat[row][col])
+  for col in range(t):
+    mat[row][col] = (math.exp(mat[row][col]))/(sum_e)
+for r in range(t):
+  for c in range(t):
+    if(c == t-1):
+      print("{:.4f}".format(mat[r][c]))
     else:
-        parts = line[3:].split(',')
-    # parse the keyword lines above
-    if(line[0] == 'D'):
-        D=int(parts[1])
-        H=int(parts[-1])
-    elif(line[0] == 'X'):
-        for i in range(0,len(parts)):
-            X.append(float(parts[i]))
-    elif(line[0:2] == 'W1'):
-        for i in range(0,len(parts)):
-            W1.append(float(parts[i]))
-    elif(line[0:2] == 'W2'):
-        for i in range(0,len(parts)):
-            W2.append(float(parts[i]))
-    elif(line[0:2] == 'B1'):
-        for i in range(0,len(parts)):
-            B1.append(float(parts[i]))
-    elif(line[0:2] == 'B2'):
-        for i in range(0,len(parts)):
-            B2.append(float(parts[i]))
-
-
-# TODO: compute hidden = relu(W1 @ X + B1), then y = W2 @ hidden + B2.
-# Print y as 4-decimal comma-separated floats.
-Layer1 = []
-for j in range(H):
-    value = 0
-    for i in range(D):
-        value = value + X[i] * W1[(j*D)+i]
-    Layer1.append(value)
-
-for i in range(H):
-    Layer1[i] = max(0,Layer1[i]+B1[i])
-Layer2 = []
-
-for j in range(D):
-    value = 0
-    for i in range(H):
-        value = value + Layer1[i] * W2[(j*H)+i]
-    Layer2.append(value)
-
-for i in range(D):
-    Layer2[i] = Layer2[i]+B2[i]
-
-
-for i in range(D):
-    if(i==D-1):
-        print("{:.4f}".format(Layer2[i]))
-    else:
-        print("{:.4f}".format(Layer2[i]),end = ',')
+      print("{:.4f}".format(mat[r][c]),end = ',')
