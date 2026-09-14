@@ -1,13 +1,21 @@
-import sys
+import sys, math
 
-# Each transformer block preserves (B, T, D). The full stack of N layers also
-# preserves it. Attention has Q, K, V and an output projection -> 4 * D^2 per
-# layer. Emit the shape and that param count.
+# Cross-entropy loss for one position:
+#   loss = -z[correct] + logsumexp(z)
+# Use the (z - max(z)) trick for numerical stability.
 
 for raw in sys.stdin:
     line = raw.rstrip("\n").strip()
-    if not line or not line.startswith("SHAPE "):
+    if not line or not line.startswith("XE "):
         continue
-    # TODO: parse B T D N_LAYERS and print "B T D params=<count>"
-    line = line.split()
-    print("{} {} {} params={}".format(int(line[1]),int(line[2]),int(line[3]),4*(int(line[3])**2)*int(line[-1])))
+    # XE <correct_id>; <comma-separated logits>
+    # TODO: parse, compute logsumexp, emit 4-decimal loss.
+    true_id = int(line[3])
+    logits = line[6:].split(',')
+    for i in range(len(logits)):
+        logits[i] = float(logits[i])
+    logsumexp = 0
+    for zi in logits:
+        logsumexp = logsumexp + math.exp(zi)
+    logsumexp = math.log(logsumexp)
+print(round(logsumexp - logits[true_id],4))
